@@ -1,0 +1,74 @@
+<html>
+<h1>Nick's IHG Rewards Utility</h1>
+Destination: <input type="text" id="dest" placeholder="Please enter a destination..."></input><br>
+Check-in:    <input type="text" id="checkin" placeholder="yyyy-mm-dd" style="margin-left:22"></input><br>
+Check-out:   <input type="text" id="checkout" placeholder="yyyy-mm-dd" style="margin-left:11"></input>
+<button onclick="send()">Find points!</button><br><br>
+
+<pre>
+A Python script behind this page asks IHG how many points are required for a free night's stay at your destination.
+
+<b>Note: Destination must be entered following the EXACT format as these examples:</b><br>
+   Marquette, MI, United States
+   Reno, NV, United States
+   Toronto, ON, Canada
+
+Most results will appear below in 20-100 seconds.
+This may take a long time (10 minutes) for large cities. 
+
+Just press the button once. It will load!
+
+<b>Results of subsequent searches will be added to the bottom of the list.</b>
+
+
+</pre>
+<table id = "results" style="width:1000px"></table>
+</html>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socket = io();
+var table = document.getElementById("results");
+var tbody = table.appendChild(document.createElement('tbody'));
+var oRow = document.createElement('tr');
+var row;
+
+oRow.appendChild(document.createElement('td'));
+oRow.appendChild(document.createElement('td'));
+oRow.appendChild(document.createElement('td'));
+table.appendChild(tbody);
+
+row = tbody.appendChild(oRow.cloneNode(true));
+row.childNodes[0].appendChild(document.createTextNode('Hotel Code'));
+row.childNodes[1].appendChild(document.createTextNode('Room Description'));
+row.childNodes[2].appendChild(document.createTextNode('Nightly rate in points'));
+
+socket.on("data", function(msg){
+	var res = msg.split("\0");
+	for (var i = 0; i < res.length; i++){
+		var res2 = res[i].split(",")
+		for (var j = 0; j < res2.length-1; j++){
+			row = tbody.appendChild(oRow.cloneNode(true));
+			row.childNodes[0].appendChild(document.createTextNode(res2[0]))
+                        row.childNodes[1].appendChild(document.createTextNode(res2[1])) 
+                        row.childNodes[2].appendChild(document.createTextNode(res2[2]))
+	
+		}
+	}
+});
+
+function send(){
+	var dest = document.getElementById("dest").value;
+	var checkin = document.getElementById("checkin").value;
+	var checkout = document.getElementById("checkout").value;
+	var data = [];
+
+	data.push(dest);
+	data.push(checkin);
+	data.push(checkout);
+
+	socket.emit('request', data);
+}
+
+
+</script>
+
